@@ -20,16 +20,20 @@ class MainActivity : AppCompatActivity() {
         button.setOnClickListener {
             Thread(Runnable {
                 val b = loadImageFromNetwork("http://tads.eaj.ufrn.br/projects/tads.png")
-                imageView.setImageBitmap(b)
+                //imageView.setImageBitmap(b)
+                //imageView.post { imageView.setImageBitmap(b) }
+                runOnUiThread{
+                    imageView.setImageBitmap(b)
+                }
             }).start()
         }
     }
 
     @Throws(IOException::class)
     fun loadImageFromNetwork(url: String): Bitmap? {
-        var bitmap: Bitmap? = null
+        var bitmap: Bitmap?
         val stream = URL(url).openStream()
-        // Converte a InputStream do Java para Bitmap
+        // Converte a InputStream para Bitmap
         bitmap = BitmapFactory.decodeStream(stream)
         stream.close()
         return bitmap
