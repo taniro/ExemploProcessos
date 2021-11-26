@@ -7,14 +7,16 @@ import android.graphics.BitmapFactory
 import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Message
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.Toast
 import java.io.IOException
 import java.net.URL
 import androidx.core.os.HandlerCompat.postDelayed
-
-
+import kotlinx.coroutines.*
+import kotlinx.coroutines.launch
+import java.lang.Runnable
 
 
 class MainActivity : AppCompatActivity() {
@@ -31,7 +33,43 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         img = findViewById<ImageView>(R.id.imageView)
+
+        /*
+        runBlocking { // this: CoroutineScope
+            launch { // launch a new coroutine and continue
+                //delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
+                Log.i("AULA", "World!") // print after delay
+            }
+            Log.i("AULA", "Hello!") // main coroutine continues while a previous one is delayed
+        }
+
+
+        runBlocking { // this: CoroutineScope
+            launch { // launch a new coroutine and continue
+                //delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
+                Log.i("AULA", "World!") // print after delay
+                downloadImagemAsync()
+            }
+            Log.i("AULA", "Hello!") // main coroutine continues while a previous one is delayed
+        }
+
+         */
+
     }
+
+    suspend fun downloadImagemAsync() {
+
+        var b:Bitmap?
+
+        withContext(Dispatchers.Default){
+            b = loadImageFromNetwork("http://agrotec.eaj.ufrn.br/img/logo_2021.png")
+        }
+        withContext(Dispatchers.IO){
+            imageView.setImageBitmap(b)
+        }
+    }
+
+
 
     override fun onDestroy() {
         super.onDestroy()
@@ -46,25 +84,42 @@ class MainActivity : AppCompatActivity() {
     */
 
     fun clique1(v: View) {
-        Thread(Runnable {
-            val b = loadImageFromNetwork("http://tads.eaj.ufrn.br/projects/tads.png")
+
+        /*
+        class simpleRunnable:Runnable{
+            override fun run() {
+                val b = loadImageFromNetwork("http://agrotec.eaj.ufrn.br/img/logo_2021.png")
+                imageView.setImageBitmap(b)
+            }
+        }
+
+        val runnable = simpleRunnable()
+        val thread = Thread(runnable)
+        thread.start()
+        */
+
+        Thread{
+            val b = loadImageFromNetwork("http://agrotec.eaj.ufrn.br/img/logo_2021.png")
             imageView.setImageBitmap(b) // <--------- fora da UI Thread
-            //imageView.post { imageView.setImageBitmap(b) }        // Possível solução 1
+            /*imageView.postDelayed( {
+                imageView.setImageBitmap(b)
+            }, 2000)       // Possível solução 1
+            */
             //runOnUiThread{                                        // Possível solução 2
-            //    imageView.setImageBitmap(b)                       //
+            //   imageView.setImageBitmap(b)                       //
             //}
-        }).start()
+        }.start()
     }
 
     fun clique2(v: View) {
         Thread(Runnable {
-            val b = loadImageFromNetwork("http://tads.eaj.ufrn.br/projects/tads.png")
+            val b = loadImageFromNetwork("http://agrotec.eaj.ufrn.br/img/logo_2021.png")
             //imageView.setImageBitmap(b) // <--------- fora da UI Thread
-            //imageView.post { imageView.setImageBitmap(b) }
-            runOnUiThread {
+            imageView.postDelayed({ imageView.setImageBitmap(b) }, 5000)
+            /*runOnUiThread{
                 //Solução alternativa
-                imageView.setImageBitmap(b)                       //
-            }
+                imageView.setImageBitmap(b)
+            }*/
         }).start()
     }
 
@@ -78,7 +133,7 @@ class MainActivity : AppCompatActivity() {
         handler.post {
             Toast.makeText(baseContext, "A mensagem chegou com Runnable!", Toast.LENGTH_SHORT).show()
             Thread(Runnable {
-                b = loadImageFromNetwork("http://tads.eaj.ufrn.br/projects/tads.png")
+                b = loadImageFromNetwork("http://agrotec.eaj.ufrn.br/img/logo_2021.png")
             }).start()
             img?.setImageBitmap(b)
         }
@@ -96,7 +151,7 @@ class MainActivity : AppCompatActivity() {
         progressBar.visibility = View.VISIBLE
 
         Thread(Runnable {
-            b = loadImageFromNetwork("http://tads.eaj.ufrn.br/projects/tads.png")
+            b = loadImageFromNetwork("http://agrotec.eaj.ufrn.br/img/logo_2021.png")
             runOnUiThread {
                 // Atualiza a imagem
                 progressBar.visibility = View.INVISIBLE
@@ -116,6 +171,7 @@ class MainActivity : AppCompatActivity() {
         return bitmap
     }
 
+
     inner class MyHandler : Handler() {
 
         override fun handleMessage(msg: Message) {
@@ -123,10 +179,8 @@ class MainActivity : AppCompatActivity() {
                 CODIGO_MENSAGEM -> {
                     Toast.makeText(this@MainActivity, "Chegou a mensagem !", Toast.LENGTH_SHORT).show()
 
-                    //b = loadImageFromNetwork("http://tads.eaj.ufrn.br/projects/tads.png")
-
                     Thread(Runnable {
-                        b = loadImageFromNetwork("http://tads.eaj.ufrn.br/projects/tads.png")
+                        b = loadImageFromNetwork("http://agrotec.eaj.ufrn.br/img/logo_2021.png")
                     }).start()
                     img?.setImageBitmap(b)
                 }
